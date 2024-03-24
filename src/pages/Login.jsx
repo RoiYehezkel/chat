@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
 
-function Login() {
+const Login = () => {
   const [err, setErr] = useState(false);
   const navigate = useNavigate();
 
@@ -19,7 +19,6 @@ function Login() {
       setErr(true);
     }
   };
-
   return (
     <div className="formContainer">
       <div className="formWrapper">
@@ -32,11 +31,11 @@ function Login() {
           {err && <span>Something went wrong</span>}
         </form>
         <p>
-          You do have an account? <Link to="/register">Register</Link>
+          You don't have an account? <Link to="/register">Register</Link>
         </p>
       </div>
     </div>
   );
-}
+};
 
 export default Login;

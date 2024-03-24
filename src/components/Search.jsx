@@ -1,22 +1,103 @@
-import React from "react";
+import React, { useContext, useState } from "react";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  setDoc,
+  doc,
+  updateDoc,
+  serverTimestamp,
+  getDoc,
+} from "firebase/firestore";
+import { db } from "../firebase";
+import { AuthContext } from "../context/AuthContext";
+const Search = () => {
+  const [username, setUsername] = useState("");
+  const [user, setUser] = useState(null);
+  const [err, setErr] = useState(false);
 
-function Search() {
+  const { currentUser } = useContext(AuthContext);
+
+  const handleSearch = async () => {
+    const q = query(
+      collection(db, "users"),
+      where("displayName", "==", username)
+    );
+
+    try {
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach((doc) => {
+        setUser(doc.data());
+      });
+    } catch (err) {
+      setErr(true);
+    }
+  };
+
+  const handleKey = (e) => {
+    e.code === "Enter" && handleSearch();
+  };
+
+  const handleSelect = async () => {
+    //check whether the group(chats in firestore) exists, if not create
+    const combinedId =
+      currentUser.uid > user.uid
+        ? currentUser.uid + user.uid
+        : user.uid + currentUser.uid;
+    try {
+      const res = await getDoc(doc(db, "chats", combinedId));
+
+      if (!res.exists()) {
+        //create a chat in chats collection
+        await setDoc(doc(db, "chats", combinedId), { messages: [] });
+
+        //create user chats
+        await updateDoc(doc(db, "userChats", currentUser.uid), {
+          [combinedId + ".userInfo"]: {
+            uid: user.uid,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+          },
+          [combinedId + ".date"]: serverTimestamp(),
+        });
+
+        await updateDoc(doc(db, "userChats", user.uid), {
+          [combinedId + ".userInfo"]: {
+            uid: currentUser.uid,
+            displayName: currentUser.displayName,
+            photoURL: currentUser.photoURL,
+          },
+          [combinedId + ".date"]: serverTimestamp(),
+        });
+      }
+    } catch (err) {}
+
+    setUser(null);
+    setUsername("");
+  };
   return (
     <div className="search">
       <div className="searchForm">
-        <input type="text" placeholder="Find a user" />
-        <div className="userChat">
-          <img
-            src="data:image/jpeg;base64,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"
-            alt=""
-          />
+        <input
+          type="text"
+          placeholder="Find a user"
+          onKeyDown={handleKey}
+          onChange={(e) => setUsername(e.target.value)}
+          value={username}
+        />
+      </div>
+      {err && <span>User not found!</span>}
+      {user && (
+        <div className="userChat" onClick={handleSelect}>
+          <img src={user.photoURL} alt="" />
           <div className="userChatInfo">
-            <span>Linoy</span>
+            <span>{user.displayName}</span>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
-}
+};
 
 export default Search;

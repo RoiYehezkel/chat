@@ -3,7 +3,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import { AuthContext } from "../context/AuthContext";
 
-function Navbar() {
+const Navbar = () => {
   const { currentUser } = useContext(AuthContext);
 
   return (
@@ -16,6 +16,6 @@ function Navbar() {
       </div>
     </div>
   );
-}
+};
 
 export default Navbar;
